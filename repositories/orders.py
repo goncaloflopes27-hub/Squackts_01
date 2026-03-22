@@ -1,0 +1,55 @@
+from __future__ import annotations
+
+import sqlite3
+
+
+def create_order(conn: sqlite3.Connection, payload: dict) -> None:
+    conn.execute(
+        """
+        INSERT INTO orders(id,numero,client_id,estado_comercial,estado_producao,estado_envio,pago,tracking,
+        metodo_pagamento,subtotal_cents,portes_cents,total_cents,data_prevista,notas,created_at,updated_at)
+        VALUES(:id,:numero,:client_id,:estado_comercial,:estado_producao,:estado_envio,:pago,:tracking,
+        :metodo_pagamento,:subtotal_cents,:portes_cents,:total_cents,:data_prevista,:notas,:created_at,:updated_at)
+        """,
+        payload,
+    )
+
+
+def update_order(conn: sqlite3.Connection, payload: dict) -> None:
+    conn.execute(
+        """
+        UPDATE orders SET client_id=:client_id,estado_comercial=:estado_comercial,estado_producao=:estado_producao,
+        estado_envio=:estado_envio,pago=:pago,tracking=:tracking,metodo_pagamento=:metodo_pagamento,
+        subtotal_cents=:subtotal_cents,portes_cents=:portes_cents,total_cents=:total_cents,data_prevista=:data_prevista,
+        notas=:notas,updated_at=:updated_at WHERE id=:id
+        """,
+        payload,
+    )
+
+
+def list_orders(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return conn.execute("SELECT * FROM orders ORDER BY created_at DESC").fetchall()
+
+
+def get_order(conn: sqlite3.Connection, order_id: str) -> sqlite3.Row | None:
+    return conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+
+
+def delete_items(conn: sqlite3.Connection, order_id: str) -> None:
+    conn.execute("DELETE FROM order_items WHERE order_id=?", (order_id,))
+
+
+def insert_item(conn: sqlite3.Connection, payload: dict) -> None:
+    conn.execute(
+        """
+        INSERT INTO order_items(id,order_id,product_id,sku_snapshot,nome_snapshot,quantidade,preco_unit_cents,
+        custo_unit_cents,tipo_producao_snapshot,personalizacao,stock_deducted,stock_returned)
+        VALUES(:id,:order_id,:product_id,:sku_snapshot,:nome_snapshot,:quantidade,:preco_unit_cents,
+        :custo_unit_cents,:tipo_producao_snapshot,:personalizacao,:stock_deducted,:stock_returned)
+        """,
+        payload,
+    )
+
+
+def list_items(conn: sqlite3.Connection, order_id: str) -> list[sqlite3.Row]:
+    return conn.execute("SELECT * FROM order_items WHERE order_id=?", (order_id,)).fetchall()
